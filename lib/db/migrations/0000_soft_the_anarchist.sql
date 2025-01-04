@@ -86,3 +86,51 @@ DO $$ BEGIN
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
+
+
+
+/*
+  # Add quotations table
+  
+  1. New Tables
+    - `quotations`
+      - `id` (uuid, primary key)
+      - `team_id` (integer, foreign key)
+      - `customer_name` (text)
+      - `customer_email` (text)
+      - `items` (jsonb array)
+      - `total` (numeric)
+      - `status` (text)
+      - `created_at` (timestamp)
+      - `updated_at` (timestamp)
+  
+  2. Security
+    - Enable RLS on `quotations` table
+    - Add policies for team members to manage their quotations
+*/
+
+CREATE TABLE IF NOT EXISTS "quotations" (
+  "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  "team_id" integer NOT NULL REFERENCES "teams"("id"),
+  "customer_name" text NOT NULL,
+  "customer_email" text NOT NULL,
+  "items" jsonb NOT NULL DEFAULT '[]',
+  "total" numeric(10,2) NOT NULL DEFAULT 0,
+  "status" text NOT NULL DEFAULT 'draft',
+  "created_at" timestamptz NOT NULL DEFAULT now(),
+  "updated_at" timestamptz NOT NULL DEFAULT now()
+);
+
+ALTER TABLE "quotations" ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Team members can manage their quotations"
+  ON "quotations"
+  FOR ALL
+  TO authenticated
+  USING (
+    team_id IN (
+      SELECT team_id 
+      FROM team_members 
+      WHERE user_id = auth.uid()
+    )
+  );

@@ -1,9 +1,12 @@
 import {
   pgTable,
   serial,
+  uuid,
   varchar,
   text,
   timestamp,
+  numeric,
+  jsonb,
   integer,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
@@ -68,10 +71,23 @@ export const invitations = pgTable('invitations', {
   status: varchar('status', { length: 20 }).notNull().default('pending'),
 });
 
+export const quotations = pgTable('quotations', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  teamId: integer('team_id').notNull().references(() => teams.id),
+  customerName: text('customer_name').notNull(),
+  customerEmail: text('customer_email').notNull(),
+  items: jsonb('items').notNull().default('[]'),
+  total: numeric('total', { precision: 10, scale: 2 }).notNull().default('0'),
+  status: text('status').notNull().default('draft'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
 export const teamsRelations = relations(teams, ({ many }) => ({
   teamMembers: many(teamMembers),
   activityLogs: many(activityLogs),
   invitations: many(invitations),
+  quotations: many(quotations),
 }));
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -122,6 +138,8 @@ export type ActivityLog = typeof activityLogs.$inferSelect;
 export type NewActivityLog = typeof activityLogs.$inferInsert;
 export type Invitation = typeof invitations.$inferSelect;
 export type NewInvitation = typeof invitations.$inferInsert;
+export type Quotation = typeof quotations.$inferSelect;
+export type NewQuotation = typeof quotations.$inferInsert;
 export type TeamDataWithMembers = Team & {
   teamMembers: (TeamMember & {
     user: Pick<User, 'id' | 'name' | 'email'>;
