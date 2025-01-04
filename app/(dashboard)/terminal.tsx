@@ -7,12 +7,12 @@ export function Terminal() {
   const [terminalStep, setTerminalStep] = useState(0);
   const [copied, setCopied] = useState(false);
   const terminalSteps = [
-    'git clone https://github.com/leerob/next-saas-starter',
-    'pnpm install',
-    'pnpm db:setup',
-    'pnpm db:migrate',
-    'pnpm db:seed',
-    'pnpm dev 🎉',
+    'ประหยัดเวลาในการขึ้นโปรเจคใหม่ทั้งหมด',
+    'เอาไปต่อยอดได้ทั้งหมด',
+    'รองรับการชำระเงินเเบบ Subcription',
+  
+    'สามารถนำไปต่อ Api open ai ได้ทันที',
+    'ลุย 🎉',
   ];
 
   useEffect(() => {
