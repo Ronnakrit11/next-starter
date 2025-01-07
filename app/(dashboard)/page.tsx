@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight, CreditCard, Database } from 'lucide-react';
 import { Terminal } from './terminal';
 
+
 export default function HomePage() {
   return (
     <main>
@@ -119,6 +120,7 @@ export default function HomePage() {
             </div>
           </div>
         </div>
+       
       </section>
     </main>
   );

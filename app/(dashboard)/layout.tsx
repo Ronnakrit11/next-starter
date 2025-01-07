@@ -89,6 +89,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <section className="flex flex-col min-h-screen">
       <Header />
       {children}
+      
     </section>
   );
 }
