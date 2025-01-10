@@ -163,3 +163,26 @@ export async function getInvoices() {
     .where(eq(invoices.teamId, userWithTeam.teamId))
     .orderBy(desc(invoices.createdAt));
 }
+
+export async function getReceipts() {
+  const user = await getUser();
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+
+  const userWithTeam = await getUserWithTeam(user.id);
+  if (!userWithTeam?.teamId) {
+    throw new Error('User is not part of a team');
+  }
+
+  return await db
+    .select()
+    .from(invoices)
+    .where(
+      and(
+        eq(invoices.teamId, userWithTeam.teamId),
+        eq(invoices.status, 'paid')
+      )
+    )
+    .orderBy(desc(invoices.updatedAt));
+}
