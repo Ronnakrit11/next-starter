@@ -15,6 +15,13 @@
       "when": 1736004804629,
       "tag": "0001_yellow_enchantress",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1736518945474,
+      "tag": "0002_eminent_amphibian",
+      "breakpoints": true
     }
   ]
 }

@@ -1,6 +1,6 @@
 import { desc, and, eq, isNull } from 'drizzle-orm';
 import { db } from './drizzle';
-import { activityLogs, quotations, teamMembers, teams, users } from './schema';
+import { activityLogs, quotations, teamMembers, teams, users, invoices } from './schema';
 import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/auth/session';
 
@@ -144,4 +144,22 @@ export async function getQuotations() {
     .from(quotations)
     .where(eq(quotations.teamId, userWithTeam.teamId))
     .orderBy(desc(quotations.createdAt));
+}
+
+export async function getInvoices() {
+  const user = await getUser();
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+
+  const userWithTeam = await getUserWithTeam(user.id);
+  if (!userWithTeam?.teamId) {
+    throw new Error('User is not part of a team');
+  }
+
+  return await db
+    .select()
+    .from(invoices)
+    .where(eq(invoices.teamId, userWithTeam.teamId))
+    .orderBy(desc(invoices.createdAt));
 }

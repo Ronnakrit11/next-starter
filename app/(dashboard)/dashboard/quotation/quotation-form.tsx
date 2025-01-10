@@ -1,13 +1,15 @@
 'use client';
 
-import { useState, useActionState, startTransition } from 'react';
+import { useState, useActionState, startTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Plus, Trash2 } from 'lucide-react';
-import { createQuotation, type ActionState } from './actions';
+import { createQuotation, updateQuotation, type ActionState } from './actions';
+import { Quotation } from '@/lib/db/schema';
 
 type QuotationItem = {
   description: string;
@@ -15,10 +17,22 @@ type QuotationItem = {
   price: number;
 };
 
-export function QuotationForm() {
+type QuotationFormProps = {
+  mode?: 'create' | 'edit';
+  quotation?: Quotation;
+  onSuccess?: () => void;
+};
+
+export function QuotationForm({ mode = 'create', quotation, onSuccess }: QuotationFormProps) {
   const router = useRouter();
-  const [items, setItems] = useState<QuotationItem[]>([{ description: '', quantity: 1, price: 0 }]);
-  const [state, formAction, isPending] = useActionState<{ error?: string; success?: string }, FormData>(createQuotation, {
+  const [items, setItems] = useState<QuotationItem[]>(
+    quotation 
+      ? (quotation.items as QuotationItem[])
+      : [{ description: '', quantity: 1, price: 0 }]
+  );
+  const [state, formAction, isPending] = useActionState<{ error?: string; success?: string }, FormData>(
+    mode === 'create' ? createQuotation : updateQuotation, 
+    {
     error: '',
     success: '',
   });
@@ -41,33 +55,41 @@ export function QuotationForm() {
     return items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     startTransition(() => {
       const formData = new FormData(e.currentTarget);
       formData.append('items', JSON.stringify(items));
       formData.append('total', calculateTotal().toString());
+      if (mode === 'edit' && quotation) {
+        formData.append('id', quotation.id);
+      }
       formAction(formData);
     });
   };
 
-  if (state.success) {
-    router.push('/dashboard/quotation');
-  }
+  useEffect(() => {
+    if (state.success) {
+      router.refresh();
+      toast.success(state.success);
+      onSuccess?.();
+    } else if (state.error) {
+      toast.error(state.error);
+    }
+  }, [state.success, router, onSuccess]);
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Customer Information</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-6 mt-4">
+      <div>
+        <h3 className="text-sm font-medium mb-3 text-gray-700">Customer Information</h3>
+        <div className="space-y-4">
           <div>
             <Label htmlFor="customer_name">Customer Name</Label>
             <Input
               id="customer_name"
               name="customer_name"
               required
+              defaultValue={quotation?.customerName}
               placeholder="Enter customer name"
             />
           </div>
@@ -78,17 +100,16 @@ export function QuotationForm() {
               name="customer_email"
               type="email"
               required
+              defaultValue={quotation?.customerEmail}
               placeholder="Enter customer email"
             />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Items</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <div>
+        <h3 className="text-sm font-medium mb-3 text-gray-700">Items</h3>
+        <div className="space-y-4">
           {items.map((item, index) => (
             <div key={index} className="flex gap-4 items-start">
               <div className="flex-1">
@@ -145,16 +166,16 @@ export function QuotationForm() {
           </div>
 
           {state.error && (
-            <p className="text-red-500 text-sm mt-2">{state.error}</p>
+            <p className="text-red-500 text-sm mt-4">{state.error}</p>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <div className="flex justify-end gap-4">
+      <div className="flex justify-end gap-4 pt-4 border-t">
         <Button
           type="button"
           variant="outline"
-          onClick={() => router.push('/dashboard/quotation')}
+          onClick={onSuccess}
         >
           Cancel
         </Button>
@@ -166,10 +187,10 @@ export function QuotationForm() {
           {isPending ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Creating...
+              {mode === 'create' ? 'Creating...' : 'Updating...'}
             </>
           ) : (
-            'Create Quotation'
+            mode === 'create' ? 'Create Quotation' : 'Update Quotation'
           )}
         </Button>
       </div>

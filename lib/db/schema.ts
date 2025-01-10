@@ -83,11 +83,25 @@ export const quotations = pgTable('quotations', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 
+export const invoices = pgTable('invoices', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  teamId: integer('team_id').notNull().references(() => teams.id),
+  quotationId: uuid('quotation_id').notNull().references(() => quotations.id),
+  customerName: text('customer_name').notNull(),
+  customerEmail: text('customer_email').notNull(),
+  items: jsonb('items').notNull(),
+  total: numeric('total', { precision: 10, scale: 2 }).notNull(),
+  status: text('status').notNull().default('pending'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
 export const teamsRelations = relations(teams, ({ many }) => ({
   teamMembers: many(teamMembers),
   activityLogs: many(activityLogs),
   invitations: many(invitations),
   quotations: many(quotations),
+  invoices: many(invoices),
 }));
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -140,6 +154,8 @@ export type Invitation = typeof invitations.$inferSelect;
 export type NewInvitation = typeof invitations.$inferInsert;
 export type Quotation = typeof quotations.$inferSelect;
 export type NewQuotation = typeof quotations.$inferInsert;
+export type Invoice = typeof invoices.$inferSelect;
+export type NewInvoice = typeof invoices.$inferInsert;
 export type TeamDataWithMembers = Team & {
   teamMembers: (TeamMember & {
     user: Pick<User, 'id' | 'name' | 'email'>;
